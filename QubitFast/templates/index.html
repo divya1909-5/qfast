@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QubitFast – Quantum Secure Messaging</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top">
+  <b class="brand">QubitFast</b>
+  <nav id="nav">
+    <button data-go="home">Home</button><button data-go="send">Send</button><button data-go="inbox">Inbox</button>
+    <button data-go="learn">Qubit map</button><button data-go="watch">Animation</button><button data-go="bb84">BB84 lab</button><button data-go="alerts">Alerts <span id="badge" hidden>0</span></button>
+  </nav>
+</header>
+<main>
+<section data-page="home">
+  <div class="hero">
+    <div>
+      <h1>Send a message. Lock it with a key. See it as qubits.</h1>
+      <p class="lead">QubitFast encrypts your text with a shared secret key, turns every 4-bit group into a qubit state on the Bloch sphere, and locks the message after 3 wrong key attempts. The sender is alerted instantly.</p>
+      <p class="cta"><button class="primary" data-go="send">Send a message</button><button data-go="inbox">Open inbox</button></p>
+    </div>
+    <div id="hero-sphere" class="sphere" aria-hidden="true"></div>
+  </div>
+  <div class="stats">
+    <div><b id="st-sent">0</b><span>messages sent</span></div>
+    <div><b id="st-opened">0</b><span>opened with the right key</span></div>
+    <div><b id="st-wrong">0</b><span>wrong key attempts</span></div>
+    <div><b id="st-locked">0</b><span>messages locked</span></div>
+    <div><b>16</b><span>qubit states used</span></div>
+    <div><b>3</b><span>attempts allowed</span></div>
+  </div>
+  <h2>What you can do</h2>
+  <div class="options">
+    <button data-go="send"><b>Send a message</b><span>Encrypt with a key and get a message ID plus its qubit states.</span></button>
+    <button data-go="inbox"><b>Open inbox</b><span>Pick a message and unlock it. Three wrong keys lock it.</span></button>
+    <button data-go="alerts"><b>Security alerts</b><span>Live alerts when someone is locked out or reads your message.</span></button>
+    <button data-go="learn"><b>Qubit map</b><span>See all 16 qubit states and try the XOR step yourself.</span></button>
+  </div>
+  <h2>New features</h2>
+  <div class="options feats">
+    <button data-go="watch"><em class="new">New</em><b>Step-by-step animation</b><span>Watch text turn into bits, XOR and qubit states one stage at a time.</span></button>
+    <button data-go="bb84"><em class="new">New</em><b>BB84 key exchange + Eve</b><span>Create a shared key with qubits and catch an eavesdropper by her error rate.</span></button>
+    <button data-go="send"><em class="new">New</em><b>Self-destruct and expiry</b><span>Messages can burn after one read or delete themselves on a timer.</span></button>
+  </div>
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li><b>Split</b> The message becomes UTF-8 bytes, then 4-bit groups.</li>
+    <li><b>Encrypt</b> Each group is XORed with the next digit of the shared key.</li>
+    <li><b>Map</b> Each encrypted group picks one of 16 qubit states (angles θ and φ).</li>
+    <li><b>Guard</b> The receiver gets 3 tries. After that the message locks and the sender is alerted.</li>
+  </ol>
+  <p class="tip">Try it: send a message here, open this page in a second tab, go to Inbox and enter a wrong key three times. The alert appears in the first tab.</p>
+</section>
+
+<section data-page="send" hidden>
+  <h1>Send a message</h1>
+  <div class="two">
+    <label>Your name <input id="s-name" placeholder="e.g. Divya"></label>
+    <label>Send to <input id="s-to" placeholder="e.g. Guide"></label>
+  </div>
+  <label>Message <textarea id="msg" rows="3" placeholder="Type a message"></textarea></label>
+  <div class="two">
+    <label>Expires after <select id="exp"><option value="0">Never</option><option value="1">1 minute</option><option value="10">10 minutes</option><option value="60">1 hour</option><option value="1440">1 day</option></select></label>
+    <label class="chk"><input type="checkbox" id="burn"> Self-destruct after it is read once</label>
+  </div>
+  <label>Shared secret key
+    <span class="row"><input id="key-enc" placeholder="Any word, phrase or number"><button id="gen" type="button">Generate key</button></span>
+  </label>
+  <button id="go-send" class="primary">Encrypt and send</button>
+  <p id="err-send" class="err" role="alert"></p>
+  <div id="sent" hidden>
+    <p class="ok">Sent. Message ID <code id="sent-id"></code>. Share the key with the receiver by a different route.</p>
+    <h2>Cipher (hex)</h2><code id="cipher"></code>
+    <h2>Qubit states</h2><div id="grid-enc" class="grid"></div>
+  </div>
+</section>
+
+<section data-page="inbox" hidden>
+  <h1>Inbox</h1>
+  <div class="inbox-wrap"><div id="list" class="list"></div><div id="panel" class="panel" hidden></div></div>
+</section>
+
+<section data-page="learn" hidden>
+  <h1>Qubit map</h1>
+  <p class="lead">Each encrypted 4-bit value n picks θ from its top two bits and φ from its bottom two bits, so no two values share a state.</p>
+  <div class="two">
+    <label>Plain 4-bit value (0-15) <input id="pv" type="number" min="0" max="15" value="9"></label>
+    <label>Key digit (0-15) <input id="kv" type="number" min="0" max="15" value="5"></label>
+  </div>
+  <div id="play" class="play"></div>
+  <h2>All 16 states</h2><div id="grid-all" class="grid"></div>
+</section>
+
+<section data-page="watch" hidden>
+  <h1>Step-by-step animation</h1>
+  <p class="lead">Type a short word and a key, then step through what happens to it.</p>
+  <div class="two"><label>Word (up to 6 characters) <input id="w-text" maxlength="6" value="Hi!"></label><label>Key <input id="w-key" value="qubit"></label></div>
+  <p class="cta"><button id="w-start" class="primary">Start</button><button id="w-next">Next step</button><button id="w-auto">Auto play</button></p>
+  <div id="w-out"></div>
+</section>
+
+<section data-page="bb84" hidden>
+  <h1>BB84 key exchange</h1>
+  <p class="lead">Alice sends random bits as qubits in random bases (+ or ×). Bob measures in random bases. They keep the rounds where the bases matched and compare half of those in public. If Eve is listening, her measurements disturb the qubits and the error rate jumps to about 25%.</p>
+  <div class="two">
+    <label>Qubits to send: <b id="b-n-v">64</b><input id="b-n" type="range" min="32" max="128" step="32" value="64"></label>
+    <label class="chk"><input type="checkbox" id="b-eve"> Eve is listening</label>
+  </div>
+  <p class="cta"><button id="b-run" class="primary">Run exchange</button></p>
+  <div id="b-out" hidden>
+    <div class="stats" id="b-stats"></div>
+    <p id="b-verdict" class="lead"></p><div id="b-key"></div>
+    <h2>Rounds</h2><div class="scroll"><table id="b-table"></table></div>
+  </div>
+</section>
+
+<section data-page="alerts" hidden>
+  <h1>Security alerts</h1>
+  <p class="lead">Live alerts for messages you sent from this browser.</p>
+  <div id="alert-list"></div>
+</section>
+</main>
+<div id="toasts"></div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
